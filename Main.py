@@ -1,10 +1,18 @@
 import os
 
-import Members
+import Subjetcs
 
 TOKEN = os.environ['token']
-members = Members.Members(TOKEN)
-members.updater.dispatcher.add_handler(members.startCommand)
 
-members.updater.dispatcher.add_handler(members.conversation)
-members.updater.start_polling()
+subjects = Subjetcs.Subjects(TOKEN)
+
+subjects.updater.dispatcher.add_handler(subjects.startCommand)
+subjects.updater.dispatcher.add_handler(subjects.registerCommand)
+subjects.updater.dispatcher.add_handler(subjects.aboutCommand)
+subjects.updater.dispatcher.add_handler(subjects.howToUseCommand)
+subjects.updater.dispatcher.add_handler(subjects.setAllSubjectMarksConversation)
+subjects.updater.dispatcher.add_handler(subjects.getAllSubjectMarksCommand)
+subjects.updater.dispatcher.add_handler(subjects.changeYearMarkConversation)
+subjects.updater.dispatcher.add_handler(subjects.changePaperMarkConversation)
+
+subjects.updater.start_polling()
