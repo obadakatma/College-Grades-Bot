@@ -142,6 +142,8 @@ class Subjects(Init):
                 for field in self.x:
                     temp.loc[j, field] = marksDataFrame[field][i]
                 j += 1
+        temp = temp.sort_values("Year")
+        temp = temp[self.x]
         temp.to_csv("temp.csv", index=False)
         marksDataFrame.to_csv("Marks.csv", index=False)
         convert("temp.csv", "Marks.pdf", font="Font/IBMPlexSansArabic-Regular.ttf")
