@@ -2,6 +2,7 @@ import pandas as pd
 import telegram
 from telegram.ext.commandhandler import CommandHandler
 from telegram.ext.filters import Filters
+from telegram.ext.messagehandler import MessageHandler
 from telegram.ext.updater import Updater
 
 
@@ -23,6 +24,8 @@ class Init:
         self.registerCommand = CommandHandler('register', self.register)
         self.howToUseCommand = CommandHandler('how_to_use', self.howToUse, self.filtr)
         self.aboutCommand = CommandHandler('about', self.about)
+        self.sendMessageCommand = CommandHandler("sendMessage", self.sendMessage)
+        self.receivedMessage = MessageHandler(filters=Filters.text, callback=self.receiveMessage)
 
     def start(self, update, context):
         self.bot.send_message(chat_id=update.message.chat_id,
@@ -30,7 +33,7 @@ class Init:
 
     def about(self, update, context):
         self.bot.send_message(chat_id=update.message.chat_id,
-                              text="This bot just for storing the marks during the college years\nهذا البوت لتخزين العلامات خلال سنوات الجامعة")
+                              text="This bot just for storing the marks during the college years\nIf you had any trouble using this bot just send your problem as a message to this bot and as fast we can will reply to you \nهذا البوت لتخزين العلامات خلال سنوات الجامعة\nإذا واجهت صعوبة في استخدام البوت فقط أرسل مشكلتك برسالة ضمن هذا البوت و بأسرع وقت سنرد عليك")
 
     def register(self, update, context):
         if self.idCsv['Chat_id'].isin([int(update.message.chat_id)]).any().any():
@@ -49,3 +52,18 @@ class Init:
                               text="To learn how to use the bot click the link below⬇️\nلمعرفة كيفية استخدام البوت انقر على الرابط في الأسفل⬇️")
         self.bot.send_message(chat_id=update.message.chat_id,
                               text="https://drive.google.com/file/d/1Uh2-za6mOev2vE6T-j4kY7Q4ikl3z3FH/view?usp=share_link")
+
+    def receiveMessage(self, update, context):
+        self.bot.send_message(chat_id=853193305,
+                              text=f"Username : {update.message.chat.username} | Name : {update.message.chat.full_name}\nMessage: {update.message.text}")
+
+        self.bot.send_message(chat_id=853193305, text=f"Chat_Id : {update.message.chat_id}")
+
+    def sendMessage(self, update, context):
+        message = f"{update.message.text}"
+        chatId = int(message.split(" ")[1])
+        message = message.split(' ')[2:]
+        text = ""
+        for index in message:
+            text += index + ' '
+        self.bot.send_message(chat_id=chatId, text=text)
