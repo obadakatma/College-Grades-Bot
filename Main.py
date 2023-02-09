@@ -2,7 +2,7 @@ import os
 
 import Subjetcs
 
-TOKEN = os.environ['token']
+TOKEN = os.environ.get('TOKEN')
 subjects = Subjetcs.Subjects(TOKEN)
 
 subjects.updater.dispatcher.add_handler(subjects.startCommand)
