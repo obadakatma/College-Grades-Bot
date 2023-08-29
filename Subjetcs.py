@@ -17,12 +17,6 @@ from createTable import PDF
 class Subjects(Init):
     def __init__(self, TOKEN):
         super().__init__(TOKEN)
-        self.db = connector.connect(
-            host="localhost",
-            user="root",
-            password=f"{os.getenv('MYSQLPASS')}",
-            database="Marks"
-        )
         self.message, self.markChanger = range(2)
         self.subjectNames = ["اضافة اسم مادة", "تعديل اسم مادة", "انتهيت"]
         self.subjectNamesButtons = [[KeyboardButton(name)] for name in self.subjectNames]
@@ -111,18 +105,27 @@ class Subjects(Init):
 
     def addSubjectName(self, update: Update, context: CallbackContext):
         message = update.message.text.lower()
-        cursor = self.db.cursor()
+        db = connector.connect(
+            host="localhost",
+            user="root",
+            password=f"{os.getenv('MYSQLPASS')}",
+            database="Marks"
+        )
+        cursor = db.cursor()
         cursor.execute(f'SELECT Subject FROM Marks WHERE chat_id = {update.message.chat_id} AND Subject = "{message}"')
         res = cursor.fetchall()
         if not res:
             cursor.execute(f'INSERT INTO Marks(chat_id,Subject) VALUES({update.message.chat_id},"{message}")')
-            self.db.commit()
+            db.commit()
+
             self.bot.send_message(chat_id=update.message.chat_id, text="تم اضافة اسم المادة",
                                   reply_markup=ReplyKeyboardMarkup(self.buttons, resize_keyboard=True))
+            db.close()
             return ConversationHandler.END
         else:
             self.bot.send_message(chat_id=update.message.chat_id, text="الاسم مخزن مسبقا",
                                   reply_markup=ReplyKeyboardMarkup(self.subjectNamesButtons, resize_keyboard=True))
+            db.close()
             return ConversationHandler.END
 
     def updateSubject(self, update: Update, context: CallbackContext):
@@ -132,39 +135,56 @@ class Subjects(Init):
 
     def getLastSubjectName(self, update: Update, context: CallbackContext):
         message = update.message.text.lower()
-        cursor = self.db.cursor()
+        db = connector.connect(
+            host="localhost",
+            user="root",
+            password=f"{os.getenv('MYSQLPASS')}",
+            database="Marks"
+        )
+        cursor = db.cursor()
         cursor.execute(f'SELECT Subject FROM Marks WHERE chat_id = {update.message.chat_id} AND Subject = "{message}"')
         res = cursor.fetchall()
         if res:
             self.lastSubjectName = message
             self.bot.send_message(chat_id=update.message.chat_id, text="قم بادخال اسم المادة الجديد")
+            db.close()
             return self.newName
         else:
             self.bot.send_message(chat_id=update.message.chat_id, text="اسم المادة غير مخزن",
                                   reply_markup=ReplyKeyboardMarkup(self.subjectNamesButtons, resize_keyboard=True))
+            db.close()
             return ConversationHandler.END
 
     def updateSubjectName(self, update: Update, context: CallbackContext):
         message = update.message.text.lower()
-        cursor = self.db.cursor()
+        db = connector.connect(
+            host="localhost",
+            user="root",
+            password=f"{os.getenv('MYSQLPASS')}",
+            database="Marks"
+        )
+        cursor = db.cursor()
         cursor.execute(f'SELECT Subject FROM Marks WHERE chat_id = {update.message.chat_id} AND Subject = "{message}"')
         res = cursor.fetchall()
         if message == self.lastSubjectName:
             self.bot.send_message(chat_id=update.message.chat_id,
                                   text="هذا الاسم هو نفسه اسم المادة القديم\nقم بادخال اسم جديد")
+            db.close()
             return self.newName
         elif res:
             self.bot.send_message(chat_id=update.message.chat_id, text="اسم المادة مخزن مسبقا",
                                   reply_markup=ReplyKeyboardMarkup(self.subjectNamesButtons, resize_keyboard=True))
+            db.close()
             return ConversationHandler.END
         else:
-            cursor = self.db.cursor()
+            cursor = db.cursor()
             cursor.execute(
                 f'UPDATE Marks SET Subject = "{message}" WHERE chat_id = {update.message.chat_id} AND Subject = "{self.lastSubjectName}"')
-            self.db.commit()
+            db.commit()
             self.bot.send_message(chat_id=update.message.chat_id, text="تم تعديل اسم المادة",
                                   reply_markup=ReplyKeyboardMarkup(self.buttons, resize_keyboard=True))
             self.lastSubjectName = ""
+            db.close()
             return ConversationHandler.END
 
     def changeOrAddYear(self, update: Update, context: CallbackContext):
@@ -174,32 +194,48 @@ class Subjects(Init):
 
     def getSubjectName(self, update: Update, context: CallbackContext):
         message = update.message.text.lower()
-        cursor = self.db.cursor()
+        db = connector.connect(
+            host="localhost",
+            user="root",
+            password=f"{os.getenv('MYSQLPASS')}",
+            database="Marks"
+        )
+        cursor = db.cursor()
         cursor.execute(f'SELECT Subject FROM Marks WHERE chat_id = {update.message.chat_id} AND Subject = "{message}"')
         res = cursor.fetchall()
         if res:
             self.SubjectName = message
             self.bot.send_message(chat_id=update.message.chat_id, text="أدخل سنة المادة")
+            db.close()
             return self.year
         else:
             self.bot.send_message(chat_id=update.message.chat_id, text="اسم المادة غير مخزن",
                                   reply_markup=ReplyKeyboardMarkup(self.buttons, resize_keyboard=True))
+            db.close()
             return ConversationHandler.END
 
     def getSubjectYear(self, update: Update, context: CallbackContext):
         message = update.message.text
+        db = connector.connect(
+            host="localhost",
+            user="root",
+            password=f"{os.getenv('MYSQLPASS')}",
+            database="Marks"
+        )
         if message.isnumeric():
-            cursor = self.db.cursor()
+            cursor = db.cursor()
             cursor.execute(
                 f'UPDATE Marks SET Year = "{message}" WHERE chat_id = {update.message.chat_id} AND Subject = "{self.SubjectName}"')
-            self.db.commit()
+            db.commit()
             self.bot.send_message(chat_id=update.message.chat_id, text="تم اضافة/تعديل سنة المادة",
                                   reply_markup=ReplyKeyboardMarkup(self.buttons, resize_keyboard=True))
             self.SubjectName = ""
+            db.close()
             return ConversationHandler.END
         else:
             self.bot.send_message(chat_id=update.message.chat_id,
                                   text="يجب ان يكون سنة المادة كرقم\nقم بإدخال السنة مجددا")
+            db.close()
             return self.year
 
     def changeOrAddYearMark(self, update: Update, context: CallbackContext):
@@ -209,26 +245,40 @@ class Subjects(Init):
 
     def getSubjectYearName(self, update: Update, context: CallbackContext):
         message = update.message.text.lower()
-        cursor = self.db.cursor()
+        db = connector.connect(
+            host="localhost",
+            user="root",
+            password=f"{os.getenv('MYSQLPASS')}",
+            database="Marks"
+        )
+        cursor = db.cursor()
         cursor.execute(f'SELECT Subject FROM Marks WHERE chat_id = {update.message.chat_id} AND Subject = "{message}"')
         res = cursor.fetchall()
         if res:
             self.SubjectName = message
             self.bot.send_message(chat_id=update.message.chat_id, text="أدخل علامة العملي للمادة")
+            db.close()
             return self.subMark
         else:
             self.bot.send_message(chat_id=update.message.chat_id, text="اسم المادة غير مخزن",
                                   reply_markup=ReplyKeyboardMarkup(self.buttons, resize_keyboard=True))
+            db.close()
             return ConversationHandler.END
 
     def updateYearMark(self, update: Update, context: CallbackContext):
         message = update.message.text
+        db = connector.connect(
+            host="localhost",
+            user="root",
+            password=f"{os.getenv('MYSQLPASS')}",
+            database="Marks"
+        )
         if message.isnumeric():
             message = int(message)
-            cursor = self.db.cursor()
+            cursor = db.cursor()
             cursor.execute(
                 f'UPDATE Marks SET YearMarks = "{message}" WHERE chat_id = {update.message.chat_id} AND Subject = "{self.SubjectName}"')
-            self.db.commit()
+            db.commit()
             self.bot.send_message(chat_id=update.message.chat_id, text="تم اضافة/تعديل علامة العملي للمادة",
                                   reply_markup=ReplyKeyboardMarkup(self.buttons, resize_keyboard=True))
             cursor.execute(
@@ -237,12 +287,14 @@ class Subjects(Init):
             if res[0][0] is not None:
                 cursor.execute(
                     f'UPDATE Marks SET FinalMark = "{res[0][0] + message}" WHERE chat_id = {update.message.chat_id} AND Subject = "{self.SubjectName}"')
-            self.db.commit()
+            db.commit()
             self.SubjectName = ""
+            db.close()
             return ConversationHandler.END
         else:
             self.bot.send_message(chat_id=update.message.chat_id,
                                   text="يجب ان يكون علامة العملي المادة كرقم\nقم بإدخال علامة العملي مجددا")
+            db.close()
             return self.subMark
 
     def changeOrAddPaperMark(self, update: Update, context: CallbackContext):
@@ -252,26 +304,40 @@ class Subjects(Init):
 
     def getSubjectPaperName(self, update: Update, context: CallbackContext):
         message = update.message.text.lower()
-        cursor = self.db.cursor()
+        db = connector.connect(
+            host="localhost",
+            user="root",
+            password=f"{os.getenv('MYSQLPASS')}",
+            database="Marks"
+        )
+        cursor = db.cursor()
         cursor.execute(f'SELECT Subject FROM Marks WHERE chat_id = {update.message.chat_id} AND Subject = "{message}"')
         res = cursor.fetchall()
         if res:
             self.SubjectName = message
             self.bot.send_message(chat_id=update.message.chat_id, text="أدخل علامة النظري للمادة")
+            db.close()
             return self.subMark
         else:
             self.bot.send_message(chat_id=update.message.chat_id, text="اسم المادة غير مخزن",
                                   reply_markup=ReplyKeyboardMarkup(self.buttons, resize_keyboard=True))
+            db.close()
             return ConversationHandler.END
 
     def updatePaperMark(self, update: Update, context: CallbackContext):
         message = update.message.text
+        db = connector.connect(
+            host="localhost",
+            user="root",
+            password=f"{os.getenv('MYSQLPASS')}",
+            database="Marks"
+        )
         if message.isnumeric():
             message = int(message)
-            cursor = self.db.cursor()
+            cursor = db.cursor()
             cursor.execute(
                 f'UPDATE Marks SET PaperMarks = "{message}" WHERE chat_id = {update.message.chat_id} AND Subject = "{self.SubjectName}"')
-            self.db.commit()
+            db.commit()
             self.bot.send_message(chat_id=update.message.chat_id, text="تم اضافة/تعديل علامة النظري للمادة",
                                   reply_markup=ReplyKeyboardMarkup(self.buttons, resize_keyboard=True))
             cursor.execute(
@@ -280,12 +346,14 @@ class Subjects(Init):
             if res[0][0] is not None:
                 cursor.execute(
                     f'UPDATE Marks SET FinalMark = "{res[0][0] + message}" WHERE chat_id = {update.message.chat_id} AND Subject = "{self.SubjectName}"')
-            self.db.commit()
+            db.commit()
             self.SubjectName = ""
+            db.close()
             return ConversationHandler.END
         else:
             self.bot.send_message(chat_id=update.message.chat_id,
                                   text="يجب ان يكون علامة النظري المادة كرقم\nقم بإدخال علامة النظري مجددا")
+            db.close()
             return self.subMark
 
     def deleteSub(self, update: Update, context: CallbackContext):
@@ -295,19 +363,27 @@ class Subjects(Init):
 
     def getSubjectDeleteName(self, update: Update, context: CallbackContext):
         message = update.message.text.lower()
-        cursor = self.db.cursor()
+        db = connector.connect(
+            host="localhost",
+            user="root",
+            password=f"{os.getenv('MYSQLPASS')}",
+            database="Marks"
+        )
+        cursor = db.cursor()
         cursor.execute(f'SELECT Subject FROM Marks WHERE chat_id = {update.message.chat_id} AND Subject = "{message}"')
         res = cursor.fetchall()
         if res:
             cursor.execute(
                 f'DELETE FROM Marks WHERE chat_id = {update.message.chat_id} AND Subject = "{message}"')
-            self.db.commit()
+            db.commit()
             self.bot.send_message(chat_id=update.message.chat_id, text="تم حذف المادة",
                                   reply_markup=ReplyKeyboardMarkup(self.buttons, resize_keyboard=True))
+            db.close()
             return ConversationHandler.END
         else:
             self.bot.send_message(chat_id=update.message.chat_id, text="اسم المادة غير مخزن",
                                   reply_markup=ReplyKeyboardMarkup(self.buttons, resize_keyboard=True))
+            db.close()
             return ConversationHandler.END
 
     def endMessage(self, update: Update, context: CallbackContext):
@@ -316,7 +392,13 @@ class Subjects(Init):
                               , reply_markup=ReplyKeyboardMarkup(self.buttons, resize_keyboard=True))
 
     def marksPdf(self, update: Update, context: CallbackContext):
-        cursor = self.db.cursor()
+        db = connector.connect(
+            host="localhost",
+            user="root",
+            password=f"{os.getenv('MYSQLPASS')}",
+            database="Marks"
+        )
+        cursor = db.cursor()
         cursor.execute(
             f"SELECT Year,Subject,YearMarks,PaperMarks,FinalMark FROM Marks WHERE chat_id = '{update.message.chat_id}' ORDER BY Year,Subject")
         res = cursor.fetchall()
@@ -339,3 +421,4 @@ class Subjects(Init):
         pdf.ln()
         pdf.output('Marks.pdf')
         self.bot.send_document(chat_id=update.message.chat_id, document=open("Marks.pdf", 'rb'))
+        db.close()
