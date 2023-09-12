@@ -1,16 +1,17 @@
 import os
 import re
 
+from mysql import connector
 from telegram.ext.callbackcontext import CallbackContext
 from telegram.ext.conversationhandler import ConversationHandler
+from telegram.ext.filters import Filters
 from telegram.ext.messagehandler import MessageHandler
-from telegram.update import Update
 from telegram.keyboardbutton import KeyboardButton
 from telegram.replykeyboardmarkup import ReplyKeyboardMarkup
 from telegram.replykeyboardremove import ReplyKeyboardRemove
-from telegram.ext.filters import Filters
+from telegram.update import Update
+
 from Init import Init
-from mysql import connector
 from createTable import PDF
 
 
@@ -104,7 +105,7 @@ class Subjects(Init):
         return self.response
 
     def addSubjectName(self, update: Update, context: CallbackContext):
-        message = update.message.text.lower()
+        message = update.message.text.lower().strip()
         db = connector.connect(
             host="localhost",
             user="root",
@@ -134,7 +135,7 @@ class Subjects(Init):
         return self.response
 
     def getLastSubjectName(self, update: Update, context: CallbackContext):
-        message = update.message.text.lower()
+        message = update.message.text.lower().strip()
         db = connector.connect(
             host="localhost",
             user="root",
@@ -156,7 +157,7 @@ class Subjects(Init):
             return ConversationHandler.END
 
     def updateSubjectName(self, update: Update, context: CallbackContext):
-        message = update.message.text.lower()
+        message = update.message.text.lower().strip()
         db = connector.connect(
             host="localhost",
             user="root",
@@ -193,7 +194,7 @@ class Subjects(Init):
         return self.subName
 
     def getSubjectName(self, update: Update, context: CallbackContext):
-        message = update.message.text.lower()
+        message = update.message.text.lower().strip()
         db = connector.connect(
             host="localhost",
             user="root",
@@ -244,7 +245,7 @@ class Subjects(Init):
         return self.subName
 
     def getSubjectYearName(self, update: Update, context: CallbackContext):
-        message = update.message.text.lower()
+        message = update.message.text.lower().strip()
         db = connector.connect(
             host="localhost",
             user="root",
@@ -303,7 +304,7 @@ class Subjects(Init):
         return self.subName
 
     def getSubjectPaperName(self, update: Update, context: CallbackContext):
-        message = update.message.text.lower()
+        message = update.message.text.lower().strip()
         db = connector.connect(
             host="localhost",
             user="root",
@@ -346,6 +347,11 @@ class Subjects(Init):
             if res[0][0] is not None:
                 cursor.execute(
                     f'UPDATE Marks SET FinalMark = "{res[0][0] + message}" WHERE chat_id = {update.message.chat_id} AND Subject = "{self.SubjectName}"')
+            else:
+                cursor.execute(
+                    f'UPDATE Marks SET YearMarks = {int(0)} WHERE chat_id = {update.message.chat_id} AND Subject = "{self.SubjectName}"')
+                cursor.execute(
+                    f'UPDATE Marks SET FinalMark = "{message}" WHERE chat_id = {update.message.chat_id} AND Subject = "{self.SubjectName}"')
             db.commit()
             self.SubjectName = ""
             db.close()
@@ -362,7 +368,7 @@ class Subjects(Init):
         return self.subName
 
     def getSubjectDeleteName(self, update: Update, context: CallbackContext):
-        message = update.message.text.lower()
+        message = update.message.text.lower().strip()
         db = connector.connect(
             host="localhost",
             user="root",
@@ -402,7 +408,7 @@ class Subjects(Init):
         cursor.execute(
             f"SELECT Year,Subject,YearMarks,PaperMarks,FinalMark FROM Marks WHERE chat_id = '{update.message.chat_id}' ORDER BY Year,Subject")
         res = cursor.fetchall()
-        data = [["Year", "Subject", "Paper mark", "Year mark", "Final mark"]]
+        data = [["Year", "Subject", "Year mark", "Paper mark", "Final mark"]]
         emdata = []
         for x in res:
             row = list(x)
